@@ -5,7 +5,7 @@ const Goal = require("../models/goalModel");
 //@route GET /api/goals
 //@access Private
 const getGoals = asyncHandler(async (req, res) => {
-  const goals = await Goal.find();
+  const goals = await Goal.find({ user: req.user.id });
   res.status(200).json(goals);
 });
 
@@ -19,6 +19,7 @@ const setGoals = asyncHandler(async (req, res) => {
   }
   const goal = await Goal.create({
     text: req.body.text,
+    user: req.user.id,
   });
   res.status(200).json(goal);
 });
@@ -33,6 +34,10 @@ const updateGoals = asyncHandler(async (req, res) => {
     throw new Error("Goal not found");
   }
 
+  if (goal.user.toString() !== req.user._id.toString()) {
+    res.status(401);
+    throw new Error("Not Authorized to update this goal");
+  }
   const updatedGoal = await Goal.findByIdAndUpdate(req.params.id, req.body, {
     new: true,
   });
